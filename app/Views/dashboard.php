@@ -138,6 +138,7 @@
                             </tbody>
                         </table>
                     </div>
+                    <?php if (!empty($pages)) { ?>
                     <nav aria-label="Page navigation example">
                         <ul class="pagination">
                             <li class="page-item">
@@ -146,8 +147,7 @@
                                     <span class="sr-only">Previous</span>
                                 </a>
                             </li>
-                            <?php if (!empty($pages)) { 
-                                $total_pages = count($pages);
+                            <?php $total_pages = count($pages);
                                 
                                 $max_pages_to_display = 5;
                                 $current_page = $current; // Ganti sesuai dengan halaman saat ini
@@ -163,7 +163,6 @@
                             <li class="page-item"><a class="page-link" href="<?= site_url('/'.$no);  ?>"><?= $no ?></a>
                             </li>
                             <?php } ?>
-                            <?php } ?>
 
                             <li class="page-item">
                                 <a class="page-link" href="<?= site_url('/'.$current_page + 1);  ?>" aria-label="Next">
@@ -173,6 +172,7 @@
                             </li>
                         </ul>
                     </nav>
+                    <?php } ?>
                 </div>
             </div>
 
