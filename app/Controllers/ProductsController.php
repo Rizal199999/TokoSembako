@@ -24,19 +24,45 @@ class ProductsController extends BaseController
     }
 
 
-    public function indexWithPagination($curr)
+    // AJAX ctrl
+    public function getDataById($id)
     {
         $model = new ProductsModel();
-        $curr_final = $curr * 10;
+        $data_result = $model->find($id); // Pastikan find() mengembalikan data yang benar
 
-        // Mengambil data produk dengan limit dan tanpa limit
-        $data = $model->getAllProducts($curr_final);
-
-        if (empty($data)) {
-            return redirect()->to('/products')->with('error', 'Tidak ada data produk.');
+        // Cek apakah data ditemukan
+        if (!$data_result) {
+            return $this->response->setJSON(['error' => 'Product not found']);
         }
 
-        return view('products', ['products' => $data]);
+        // Pastikan data lengkap dikirimkan
+        return $this->response->setJSON($data_result);
+    }
+
+    // Untuk menghapus produk
+    public function deleteProduct($id)
+    {
+        $model = new ProductsModel();
+        $model->delete($id);
+        return $this->response->setJSON(['status' => 'deleted']);
+    }
+
+    // ajax ctrl
+    
+
+
+    public function pagination($curr)
+    {
+        // Membuat instance model
+        $model = new ProductsModel();
+        
+        $curr_final = $curr * 10;
+        // Mengambil semua data produk dari tabel 'products'
+        $data = $model->getAllProducts($curr_final);
+        $data2 = $model->getAllProductsNotLimit();
+
+        // Mengirim data ke view 'dashboard'
+        return view('products', [ 'products' => $data , 'pages' => $data2, 'current' => $curr ]);
     }
 
     public function add()
@@ -75,18 +101,21 @@ class ProductsController extends BaseController
         $products = $model->searchProducts($query);
 
         // Menampilkan data dalam format tabel
+        $no = 0;
         $output = '';
         if ($products) {
+
             foreach ($products as $product) {
+                $no++;
                 $output .= '<tr>';
-                $output .= '<td>' . $product['product_id'] . '</td>';
-                $output .= '<td>' . $product['stock'] . '</td>';
-                $output .= '<td>' . $product['unit'] . '</td>';
+                $output .= '<td>' . $no . '</td>';
                 $output .= '<td>' . $product['product_name'] . '</td>';
                 $output .= '<td>' . $product['category'] . '</td>';
-                $output .= '<td>' . $product['description'] . '</td>';
+                $output .= '<td>' . $product['stock'] . '</td>';
+                $output .= '<td>' . $product['unit'] . '</td>';
                 $output .= '<td>' . 'Rp' . number_format($product['price'], 0, ',', '.') . '</td>';
-                $output .= '<td><a class="btn btn-sm btn-primary" href="#">Detail</a></td>';
+                $output .= '<td>' . $product['description'] . '</td>';
+                $output .= '<td><button class="btn btn-sm btn-primary btn-detail" id="'.$product['product_id'].'" onclick="modal(this.id)">Detail</button></td>';
                 $output .= '</tr>';
             }
         } else {
@@ -95,36 +124,37 @@ class ProductsController extends BaseController
 
         echo $output;
     }
+
+    
     public function update($id)
     {
+        // Ambil data dari request (JSON)
+        $data = $this->request->getJSON(true); // Konversi ke array asosiatif
+    
         // Validasi input
         $validation = $this->validate([
             'product_name' => 'required',
             'category' => 'required',
-            'stock' => 'required|integer',
-            'unit' => 'required',
             'price' => 'required|integer',
+            'unit' => 'required',
+            'stock' => 'required|integer',
             'description' => 'required',
         ]);
-
+    
         if (!$validation) {
-            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+            return $this->response->setJSON([
+                'status' => 'error',
+                'errors' => $this->validator->getErrors(),
+            ]);
         }
-
-        // Ambil data dari form
-        $data = [
-            'product_name' => $this->request->getPost('product_name'),
-            'category' => $this->request->getPost('category'),
-            'stock' => $this->request->getPost('stock'),
-            'unit' => $this->request->getPost('unit'),
-            'price' => $this->request->getPost('price'),
-            'description' => $this->request->getPost('description'),
-        ];
-
+    
+        // Update data di database
         $model = new ProductsModel();
-        $model->update($id, $data);
-
-        // Redirect ke halaman produk
-        return redirect()->to('/products')->with('success', 'Produk berhasil diupdate');
+        if ($model->update($id, $data)) {
+            return $this->response->setJSON(['status' => 'success', 'message' => 'Produk berhasil diperbarui']);
+        } else {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Gagal memperbarui produk']);
+        }
     }
+    
 }
