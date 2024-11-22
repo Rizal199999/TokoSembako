@@ -11,4 +11,8 @@ $routes->get('/products/add', 'ProductsController::add');
 $routes->post('/products/save', 'ProductsController::save');
 $routes->get('/products/search_query', 'ProductsController::search_ajax');
 $routes->get('/products', 'ProductsController::index');
-$routes->post('/products/update/(:num)', 'ProductsController::update/$1'); // Rute untuk update produk
+$routes->post('/products/update/(:segment)', 'ProductsController::update/$1');
+$routes->get('/get-data-modals/(:segment)', 'ProductsController::getDataById/$1');
+$routes->delete('/products/delete/(:segment)', 'ProductsController::deleteProduct/$1');
+$routes->get('/products/(:num)', 'ProductsController::pagination/$1');
+
