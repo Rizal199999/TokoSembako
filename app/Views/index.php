@@ -65,13 +65,8 @@
                 </div>
 
                 <div class="navbar-nav w-100">
-                    <a href="index" class="nav-item nav-link active"><i
+                    <a href="index.html" class="nav-item nav-link active"><i
                             class="fa fa-tachometer-alt me-2"></i>Dashboard</a>
-                </div>
-                <div class="navbar-nav w-100">
-                    <a href="products" class="nav-item nav-link">
-                        <i class="fa fa-tachometer-alt me-2"></i>Data Produk</a>
-                </div>
             </nav>
         </div>
         <!-- Sidebar End -->
@@ -101,31 +96,91 @@
             </nav>
             <!-- Navbar End -->
 
+            <div class="container-fluid pt-4 px-4">
+                <div class="bg-light text-center rounded p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <h6 class="mb-0">Data Produk</h6>
+                        <a href="">Lihat Semua</a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table text-start align-middle table-bordered table-hover mb-0">
+                            <thead>
+                                <tr class="text-dark">
+                                    <th scope="col">ID Produk</th>
+                                    <th scope="col">Stock</th>
+                                    <th scope="col">Unit</th>
+                                    <th scope="col">Nama Produk</th>
+                                    <th scope="col">Kategori</th>
+                                    <th scope="col">Deskripsi</th>
+                                    <th scope="col">Harga</th>
+                                    <th scope="col">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (!empty($products)): ?>
+                                <?php foreach ($products as $product): ?>
+                                <tr>
+                                    <td><?= $product['product_id']; ?></td>
+                                    <td><?= $product['stock']; ?></td>
+                                    <td><?= $product['unit']; ?></td>
+                                    <td><?= $product['product_name']; ?></td>
+                                    <td><?= $product['category']; ?></td>
+                                    <td><?= $product['description']; ?></td>
+                                    <td><?= 'Rp' . number_format($product['price'], 0, ',', '.'); ?></td>
+                                    <td><a class="btn btn-sm btn-primary" href="#">Detail</a></td>
+                                </tr>
+                                <?php endforeach; ?>
+                                <?php else: ?>
+                                <tr>
+                                    <td colspan="8" class="text-center">Tidak ada data produk.</td>
+                                </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <nav aria-label="Page navigation example">
+                        <ul class="pagination">
+                            <li class="page-item">
+                                <a class="page-link" href="<?= site_url('/'.$current - 1);  ?>" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                    <span class="sr-only">Previous</span>
+                                </a>
+                            </li>
+                            <?php if (!empty($pages)) { 
+                                $total_pages = count($pages);
+                                
+                                $max_pages_to_display = 5;
+                                $current_page = $current; // Ganti sesuai dengan halaman saat ini
 
+                                $start_page = max(1, $current_page - floor($max_pages_to_display / 2));
+                                $end_page = min($start_page + $max_pages_to_display - 1, $total_pages);
+                                
+                                if ($end_page - $start_page < $max_pages_to_display) {
+                                    $start_page = max(1, $end_page - $max_pages_to_display + 1);
+                                }
+                            ?>
+                            <?php for ($no = $start_page; $no <= $end_page; $no++) { ?>
+                            <li class="page-item"><a class="page-link" href="<?= site_url('/'.$no);  ?>"><?= $no ?></a>
+                            </li>
+                            <?php } ?>
+                            <?php } ?>
+
+                            <li class="page-item">
+                                <a class="page-link" href="<?= site_url('/'.$current_page + 1);  ?>" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                    <span class="sr-only">Next</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
 
 
 
             <!-- Back to Top -->
             <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
         </div>
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <script>
-        function searchProducts() {
-            var query = $('#searchQuery').val();
-
-            $.ajax({
-                url: '<?= site_url('/products/search_query'); ?>',
-                method: 'GET',
-                data: {
-                    query: query
-                },
-                success: function(response) {
-                    // Menampilkan data produk pada tabel
-                    $('#productTable').html(response);
-                }
-            });
-        }
-        </script>
 
         <!-- JavaScript Libraries -->
         <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>

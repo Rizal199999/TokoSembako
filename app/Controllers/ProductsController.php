@@ -6,7 +6,22 @@ use App\Models\ProductsModel;
 
 class ProductsController extends BaseController
 {
+<<<<<<< HEAD
     public function index()
+=======
+    public function index(){
+        $model = new ProductsModel();
+        
+        $curr_final = 1 * 10;
+        // Mengambil semua data produk dari tabel 'products'
+        $data = $model->getAllProducts($curr_final);
+        $data2 = $model->getAllProductsNotLimit();
+
+        // Mengirim data ke view 'dashboard'
+        return view('dashboard', [ 'products' => $data , 'pages' => $data2, 'current' => 1 ]);
+    }
+    public function indexWithPagination($curr)
+>>>>>>> 56c1b5fe577277ff838bcd5371f66202ef293111
     {
         $model = new ProductsModel();
         $curr_final = 0 * 10;
