@@ -37,4 +37,20 @@ class ProductsModel extends Model
                     ->orLike('description', $query)
                     ->findAll();
     }
+    public function deleteProduct($id)
+{
+    return $this->delete($id);
+}
+public function detail($id)
+{
+    $model = new ProductsModel();
+    $product = $model->find($id);
+
+    if ($product) {
+        return $this->response->setJSON($product);
+    } else {
+        return $this->response->setJSON(['error' => 'Produk tidak ditemukan'], 404);
+    }
+}
+
 }

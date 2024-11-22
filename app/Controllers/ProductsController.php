@@ -46,9 +46,25 @@ class ProductsController extends BaseController
 
     public function save()
     {
+        // Load ProductsModel (it should already be autoloaded if you use CodeIgniter's default conventions)
         $productsModel = new ProductsModel();
-
-        // Validasi data
+    
+        // Data Validation
+        $validation =  \Config\Services::validation();
+    
+        // Validate data
+        if (!$this->validate([
+            'product_name' => 'required',
+            'category' => 'required',
+            'stock' => 'required|numeric',
+            'unit' => 'required',
+            'price' => 'required|numeric',
+            'description' => 'required',
+        ])) {
+            return redirect()->back()->withInput()->with('error', 'Please fill all required fields correctly.');
+        }
+    
+        // Prepare data for insertion
         $data = [
             'product_name' => $this->request->getPost('product_name'),
             'category' => $this->request->getPost('category'),
@@ -57,44 +73,83 @@ class ProductsController extends BaseController
             'price' => $this->request->getPost('price'),
             'description' => $this->request->getPost('description'),
         ];
-
-        // Simpan data ke database
+    
+        // Try to insert data into the database
         if ($productsModel->insert($data)) {
-            return redirect()->to('/')->with('success', 'Data produk berhasil disimpan.');
+            return redirect()->to('/products')->with('success', 'Data produk berhasil disimpan.');
         } else {
             return redirect()->back()->with('error', 'Gagal menyimpan data produk.');
         }
     }
+    
     public function search_ajax()
     {
-        // Ambil query dari request Ajax
+        // Ambil query dari request AJAX
         $query = $this->request->getVar('query');
-
+    
         // Memanggil model untuk mencari data berdasarkan query
         $model = new ProductsModel();
         $products = $model->searchProducts($query);
-
-        // Menampilkan data dalam format tabel
+    
+        // Menyiapkan output
         $output = '';
-        if ($products) {
+        if (!empty($products) && is_array($products)) {
             foreach ($products as $product) {
+                // Render baris tabel
                 $output .= '<tr>';
                 $output .= '<td>' . $product['product_id'] . '</td>';
-                $output .= '<td>' . $product['stock'] . '</td>';
-                $output .= '<td>' . $product['unit'] . '</td>';
                 $output .= '<td>' . $product['product_name'] . '</td>';
                 $output .= '<td>' . $product['category'] . '</td>';
-                $output .= '<td>' . $product['description'] . '</td>';
+                $output .= '<td>' . $product['stock'] . '</td>';
+                $output .= '<td>' . $product['unit'] . '</td>';
                 $output .= '<td>' . 'Rp' . number_format($product['price'], 0, ',', '.') . '</td>';
-                $output .= '<td><a class="btn btn-sm btn-primary" href="#">Detail</a></td>';
+                $output .= '<td>' . $product['description'] . '</td>';
+                $output .= '<td>';
+                $output .= '<button class="btn btn-sm btn-primary btn-detail"
+                                data-id="' . $product['product_id'] . '"
+                                data-name="' . $product['product_name'] . '"
+                                data-category="' . $product['category'] . '"
+                                data-stock="' . $product['stock'] . '"
+                                data-unit="' . $product['unit'] . '"
+                                data-price="' . $product['price'] . '"
+                                data-description="' . $product['description'] . '" 
+                                data-bs-toggle="modal"
+                                data-bs-target="#productDetailModal_' . $product['product_id'] . '">Detail</button>';
+                $output .= '</td>';
                 $output .= '</tr>';
+    
+                // Render modal detail produk
+                $output .= '<div class="modal fade" id="productDetailModal_' . $product['product_id'] . '" tabindex="-1" aria-labelledby="productDetailModalLabel_' . $product['product_id'] . '" aria-hidden="true">';
+                $output .= '<div class="modal-dialog">';
+                $output .= '<div class="modal-content">';
+                $output .= '<div class="modal-header">';
+                $output .= '<h5 class="modal-title" id="productDetailModalLabel_' . $product['product_id'] . '">Detail Produk</h5>';
+                $output .= '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>';
+                $output .= '</div>';
+                $output .= '<div class="modal-body">';
+                $output .= '<p>Nama Produk: ' . $product['product_name'] . '</p>';
+                $output .= '<p>Kategori: ' . $product['category'] . '</p>';
+                $output .= '<p>Stok: ' . $product['stock'] . ' ' . $product['unit'] . '</p>';
+                $output .= '<p>Harga: Rp' . number_format($product['price'], 0, ',', '.') . '</p>';
+                $output .= '<p>Deskripsi: ' . $product['description'] . '</p>';
+                $output .= '</div>';
+                $output .= '<div class="modal-footer">';
+                $output .= '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>';
+                $output .= '</div>';
+                $output .= '</div>';
+                $output .= '</div>';
+                $output .= '</div>';
             }
         } else {
             $output .= '<tr><td colspan="8" class="text-center">Tidak ada data produk yang sesuai.</td></tr>';
         }
-
+    
+        // Kembalikan output
         echo $output;
     }
+    
+
+    
     public function update($id)
     {
         // Validasi input
@@ -127,4 +182,22 @@ class ProductsController extends BaseController
         // Redirect ke halaman produk
         return redirect()->to('/products')->with('success', 'Produk berhasil diupdate');
     }
+    public function delete($id)
+{
+    $model = new \App\Models\ProductsModel();
+
+    // Cek apakah produk dengan ID yang diberikan ada
+    $product = $model->find($id);
+    if (!$product) {
+        return redirect()->to('/products')->with('error', 'Produk tidak ditemukan.');
+    }
+
+    // Hapus produk
+    if ($model->deleteProduct($id)) {
+        return redirect()->to('/products')->with('success', 'Produk berhasil dihapus.');
+    } else {
+        return redirect()->to('/products')->with('error', 'Gagal menghapus produk.');
+    }
+}
+
 }

@@ -131,8 +131,9 @@
                                     </div>
                                     <!-- Body Modal -->
                                     <div class="modal-body">
-                                        <form id="addProductForm" action="<?= base_url('products/save'); ?>"
+                                        <form id="addProductForm" action="<?= base_url('products/tambah'); ?>"
                                             method="POST">
+                                            <?= csrf_field(); ?>
                                             <div class="mb-3">
                                                 <label for="productName" class="form-label">Nama Produk</label>
                                                 <input type="text" class="form-control" id="productName"
@@ -162,14 +163,17 @@
                                                 <input type="text" class="form-control" id="description"
                                                     name="description" required>
                                             </div>
-                                            <!-- Footer Modal -->
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary"
-                                                    data-bs-dismiss="modal">Tutup</button>
-                                                <button class="btn btn-primary" form="addProductForm">Simpan</button>
-                                            </div>
-                                        </form>
                                     </div>
+                                    <!-- Footer Modal -->
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary"
+                                            data-bs-dismiss="modal">Tutup</button>
+                                        <button type="submit" class="btn btn-primary"
+                                            form="addProductForm">Simpan</button>
+
+                                    </div>
+                                    </form>
+
                                 </div>
                             </div>
                         </div>
@@ -306,9 +310,19 @@
                                                     onclick="hideModal('productDetailModal_<?= $product['product_id']; ?>')">
                                                     <i class="fas fa-edit"></i> Update
                                                 </button>
-                                                <button type="button" class="btn btn-danger">
+                                                <button type="button" class="btn btn-danger"
+                                                    onclick="confirmDelete(<?= $product['product_id']; ?>)">
                                                     <i class="fas fa-trash"></i> Delete
                                                 </button>
+
+                                                <script>
+                                                function confirmDelete(id) {
+                                                    if (confirm("Apakah Anda yakin ingin menghapus produk ini?")) {
+                                                        window.location.href = "/products/delete/" + id;
+                                                    }
+                                                }
+                                                </script>
+
                                             </div>
                                             <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
                                                 <i class="fas fa-times"></i> Tutup
@@ -411,6 +425,7 @@
     </div>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
+    // Menangani event pencarian dan menampilkan data produk
     function searchProducts() {
         var query = $('#searchQuery').val();
 
@@ -421,11 +436,77 @@
                 query: query
             },
             success: function(response) {
-                // Menampilkan data produk pada tabel
                 $('#productTable').html(response);
+
+                // Re-bind event untuk tombol detail setelah tabel diperbarui
+                $('.btn-detail').off('click').on('click', function() {
+                    const productId = $(this).data('id');
+
+                    // Lakukan AJAX untuk mendapatkan detail produk
+                    $.ajax({
+                        url: '/products/detail/' + productId,
+                        method: 'GET',
+                        success: function(data) {
+                            if (data.error) {
+                                alert(data.error);
+                            } else {
+                                // Isi data modal dengan data produk
+                                $('#productDetailModal .modal-title').text(
+                                    'Detail Produk - ' + data.product_name);
+                                $('#productNameDetail').val(data.product_name);
+                                $('#productCategoryDetail').val(data.category);
+                                $('#stockDetail').val(data.stock);
+                                $('#unitDetail').val(data.unit);
+                                $('#priceDetail').val(data.price);
+                                $('#descriptionDetail').val(data.description);
+
+                                // Tampilkan modal
+                                $('#productDetailModal').modal('show');
+                            }
+                        },
+                        error: function(xhr) {
+                            alert('Gagal mendapatkan detail produk.');
+                        }
+                    });
+                });
+            },
+            error: function(xhr) {
+                alert('Gagal memuat hasil pencarian.');
             }
         });
     }
+
+
+    $(document).on('click', '.btn-detail', function() {
+        const productId = $(this).data('id');
+
+        // Lakukan AJAX untuk mendapatkan detail produk
+        $.ajax({
+            url: '/products/detail/' + productId,
+            method: 'GET',
+            success: function(data) {
+                if (data.error) {
+                    alert(data.error); // Menampilkan error dari server
+                } else {
+                    $('#productDetailModal .modal-title').text('Detail Produk - ' + data
+                        .product_name);
+                    $('#productNameDetail').val(data.product_name);
+                    $('#productCategoryDetail').val(data.category);
+                    $('#stockDetail').val(data.stock);
+                    $('#unitDetail').val(data.unit);
+                    $('#priceDetail').val(data.price);
+                    $('#descriptionDetail').val(data.description);
+                    $('#productDetailModal').modal('show');
+                }
+            },
+            error: function(xhr) {
+                console.error("Status: " + xhr.status);
+                console.error("Response: " + xhr.responseText);
+                alert('Gagal mendapatkan detail produk.');
+
+            }
+        });
+    });
     </script>
     <script>
     function hideModal(modalId) {
