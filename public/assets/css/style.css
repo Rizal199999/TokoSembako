@@ -63,6 +63,15 @@
     font-weight: normal;
     border-radius: 50px;
 }
+/* Sub-menu dropdown ke bawah */
+.dropdown-submenu .dropdown-menu {
+    top: 100%; /* Pindahkan ke bawah menu utama */
+    left: 0; /* Tetap sejajar secara horizontal */
+    margin-top: 0.1rem; /* Jarak kecil antara menu utama dan sub-menu */
+    margin-left: 0; /* Pastikan tidak ada pergeseran horizontal */
+}
+
+
 
 
 /*** Layout ***/

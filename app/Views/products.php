@@ -32,6 +32,8 @@
     <link href="<?php echo base_url('assets/css/style.css') ?>" rel=" stylesheet">
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- alert Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body>
@@ -52,27 +54,20 @@
                 <a href="index.html" class="navbar-brand mx-4 mb-3">
                     <h3 class="text-primary">Toko Sembako</h3>
                 </a>
-                <div class="d-flex align-items-center ms-4 mb-4">
-                    <div class="position-relative">
-                        <img class="rounded-circle" src="<?php echo base_url() ?>assets/img/user.jpg" alt=""
-                            style="width: 40px; height: 40px;">
-                        <div
-                            class="bg-success rounded-circle border border-2 border-white position-absolute end-0 bottom-0 p-1">
-                        </div>
-                    </div>
-                    <div class="ms-3">
-                        <h6 class="mb-0">Bapak Rizal</h6>
-                        <span>Admin</span>
-                    </div>
-                </div>
-
-                <div class="navbar-nav w-100">
-                    <a href="index" class="nav-item nav-link ">
-                        <i class="fa fa-tachometer-alt me-2"></i>Dashboard</a>
-                </div>
+                <?php include('components/profile.php'); ?>
                 <div class="navbar-nav w-100">
                     <a href="products" class="nav-item nav-link active">
-                        <i class="fa fa-tachometer-alt me-2"></i>Data Produk</a>
+                        <i class="fa fa-file-alt me-2"></i>Data Produk</a>
+                </div>
+                <?php if (session()->get('role') == 'admin') { ?>
+                <div class="navbar-nav w-100">
+                    <a href="<?php echo site_url('/price_management') ?>" class="nav-item nav-link">
+                        <i class="fa fa-tag me-2"></i>Manajemen Harga</a>
+                </div>
+                <?php } ?>
+                <div class="navbar-nav w-100">
+                    <a href="<?php echo site_url('/selling_price') ?>" class="nav-item nav-link">
+                        <i class="fas fa-money-bill-wave me-2"></i>Harga Jual</a>
                 </div>
             </nav>
         </div>
@@ -86,20 +81,14 @@
                 <a href="index.html" class="navbar-brand d-flex d-lg-none me-4">
                     <h2 class="text-primary mb-0"><i class="fa fa-hashtag"></i></h2>
                 </a>
-                <div class="navbar-nav align-items-center ms-auto">
-                    <div class="nav-item dropdown">
-                        <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-                            <img class="rounded-circle me-lg-2" src="<?php echo base_url() ?>assets/img/user.jpg" alt=""
-                                style="width: 40px; height: 40px;">
-                            <span class="d-none d-lg-inline-flex">Bapak Rizal</span>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-end bg-light border-0 rounded-0 rounded-bottom m-0">
-                            <a href="#" class="dropdown-item">My Profile</a>
-                            <a href="#" class="dropdown-item">Settings</a>
-                            <a href="#" class="dropdown-item">Log Out</a>
-                        </div>
+                <!-- Ikon untuk Grafik -->
+                <div class="d-flex justify-content-center align-items-center mb-3">
+                    <div class="icon-container" style="display: flex; gap: 20px;">
+                        <i class="fas fa-chart-bar text-primary" style="font-size: 24px; cursor: pointer;"
+                            title="Lihat Grafik Perbandingan Algoritma" onclick="viewComparisonGraph()"></i>
                     </div>
                 </div>
+                <?php include('components/navlist.php'); ?>
             </nav>
             <!-- Navbar End -->
 
@@ -112,9 +101,50 @@
                             <input type="text" id="searchQuery" class="form-control me-2" placeholder="Cari Produk..."
                                 onkeyup="searchProducts()">
                         </div>
-                        <!-- Tombol dan Ikon -->
-                        <div class="d-flex align-items-center">
-                            <button type="button" class="btn btn-sm btn-success me-2 d-flex align-items-center"
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary d-flex align-items-center" type="button"
+                                    id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-filter me-1" style="font-size: 14px;"></i> Filter
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                    <!-- Submenu Filter Harga -->
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#">Filter Harga</a>
+                                        <ul class="dropdown-menu nested-menu">
+                                            <li><a class="dropdown-item"
+                                                    href="<?= site_url('/products/filterByPrice/low'); ?>">Paling
+                                                    Rendah</a>
+                                            </li>
+                                            <li><a class="dropdown-item"
+                                                    href="<?= site_url('/products/filterByPrice/high'); ?>">Paling
+                                                    Tinggi</a></li>
+                                        </ul>
+                                    </li>
+                                    <!-- Submenu Filter Stok -->
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#">Filter Stok</a>
+                                        <ul class="dropdown-menu nested-menu">
+                                            <li><a class="dropdown-item"
+                                                    href="<?= site_url('/products/filterByStock/low'); ?>">Paling
+                                                    Sedikit</a></li>
+                                            <li><a class="dropdown-item"
+                                                    href="<?= site_url('/products/filterByStock/high'); ?>">Paling
+                                                    Banyak</a></li>
+                                        </ul>
+                                    </li>
+                                    <!-- Reset Filter -->
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="<?= site_url('/products/resetFilters'); ?>">Reset
+                                            Filter</a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <!-- Tombol dan Ikon -->
+                            <button type="button" class="btn btn-sm btn-success d-flex align-items-center"
                                 data-bs-toggle="modal" data-bs-target="#addProductModal">
                                 <i class="fas fa-plus me-1"></i> Tambah
                             </button>
@@ -127,7 +157,9 @@
                                 <div class="modal-content">
                                     <!-- Header Modal -->
                                     <div class="modal-header">
-                                        <h5 class="modal-title" id="addProductModalLabel">Tambah Data Produk</h5>
+                                        <h5 class="modal-title" id="addProductModalLabel">Tambah
+                                            Data Produk
+                                        </h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"
                                             aria-label="Close"></button>
                                     </div>
@@ -136,7 +168,8 @@
                                         <form id="addProductForm" action="<?= base_url('products/save'); ?>"
                                             method="POST">
                                             <div class="mb-3">
-                                                <label for="productName" class="form-label">Nama Produk</label>
+                                                <label for="productName" class="form-label">Nama
+                                                    Produk</label>
                                                 <input type="text" class="form-control" id="productName"
                                                     name="product_name" required>
                                             </div>
@@ -175,35 +208,12 @@
                                 </div>
                             </div>
                         </div>
-
-
-                        <a href="<?= site_url('/products'); ?>"
-                            class="btn btn-sm btn-primary d-flex align-items-center">
-                            <i class="fas fa-eye me-1"></i> View
-                        </a>
                     </div>
                 </div>
-                <!-- Flash Message Success or Error -->
-                <?php if (session()->getFlashdata('success')): ?>
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <?= session()->getFlashdata('success'); ?>
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times; Berhasil cik</span>
-                    </button>
-                </div>
-                <?php endif; ?>
-                <?php if (session()->getFlashdata('error')): ?>
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <?= session()->getFlashdata('error'); ?>
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times; Gagal cok!</span>
-                    </button>
-                </div>
-                <?php endif; ?>
 
                 <!-- Tabel Produk -->
-                <div class="table-responsive">
-                    <table class="table text-start align-middle table-bordered table-hover mb-0">
+                <div class="table-responsive d-flex flex-column-reverse justify-content-lg-center align-items-center">
+                    <table class="table text-start align-middle table-bordered table-hover mb-0 p -3">
                         <thead>
                             <tr class="text-dark">
                                 <th scope="col">No.</th>
@@ -217,9 +227,9 @@
                             </tr>
                         </thead>
                         <tbody id="productTable">
-                            
+
                             <?php
-                            $no = ($current > 1) ? $current * 10 : $current; 
+                            $no = ($current > 1) ? $current * 10 : (($current == 1) ? $current : $current+1); 
                             if (!empty($products) && is_array($products)): 
                             ?>
                             <?php foreach ($products as $product): ?>
@@ -232,28 +242,31 @@
                                 <td><?= 'Rp' . number_format($product['price'], 0, ',', '.'); ?></td>
                                 <td><?= $product['description']; ?></td>
                                 <td>
-                                    <button id="<?= $product['product_id']; ?>" class="btn btn-sm btn-primary btn-detail" onclick="modal(this.id)">
-                                        Detail
-                                    </button>
+                                    <button class="btn btn-sm btn-primary btn-detail"
+                                        data-id="<?= $product['product_id']; ?>"
+                                        onclick="openModal(this)">Detail</button>
                                 </td>
                             </tr>
                             <?php $no += 1; ?>
-                <?php endforeach; ?>
-                <?php else: ?>
-                <tr>
-                    <td colspan="8" class="text-center">Tidak ada data produk.</td>
-                </tr>
-                <?php endif; ?>
-                </tbody>
-                <nav aria-label="Page navigation example">
-                        <ul class="pagination">
-                            <li class="page-item">
-                                <a class="page-link" href="<?= site_url('/products/'.$current - 1);  ?>" aria-label="Previous">
-                                    <span aria-hidden="true">&laquo;</span>
-                                    <span class="sr-only">Previous</span>
-                                </a>
-                            </li>
-                            <?php if (!empty($pages)) { 
+                            <?php endforeach; ?>
+                            <?php else: ?>
+                            <tr>
+                                <td colspan="8" class="text-center">Tidak ada data produk.</td>
+                            </tr>
+                            <?php endif; ?>
+                        </tbody>
+                        <nav aria-label="Page navigation example" class="mt-3">
+                            <ul class="pagination">
+                                <?php if ($current > 1) { ?>
+                                <li class="page-item">
+                                    <a class="page-link" href="<?= site_url('products/' . ($current - 1)); ?>"
+                                        aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                        <span class="sr-only">Previous</span>
+                                    </a>
+                                </li>
+                                <?php } ?>
+                                <?php if (!empty($pages)) { 
                                 $total_pages = count($pages);
                                 
                                 $max_pages_to_display = 5;
@@ -266,79 +279,95 @@
                                     $start_page = max(1, $end_page - $max_pages_to_display + 1);
                                 }
                             ?>
-                            <?php for ($no = $start_page; $no <= $end_page; $no++) { ?>
-                            <li class="page-item"><a class="page-link" href="<?= site_url('/products/'.$no);  ?>"><?= $no ?></a>
-                            </li>
-                            <?php } ?>
-                            <?php } ?>
-
-                            <li class="page-item">
-                                <a class="page-link" href="<?= site_url('/products/'.$current_page + 1);  ?>" aria-label="Next">
-                                    <span aria-hidden="true">&raquo;</span>
-                                    <span class="sr-only">Next</span>
+                                <?php for ($no = $start_page; $no <= $end_page; $no++) { ?>
+                                <a class="page-link <?= ($current_page == $no) ? 'bg-primary text-white' : (($current_page <= 1 && $no == 1) ? 'bg-primary text-white' : null )?>"
+                                    href="<?= site_url('products/'.$no); ?>">
+                                    <?php echo $no ?>
                                 </a>
-                            </li>
-                        </ul>
-                    </nav>
-                </table>
-            </div>
-        </div>
-    </div>
 
+                                <?php } ?>
+                                <?php } ?>
+                                <li class="page-item">
+                                    <a class="page-link" href="<?= site_url('products/' . $current_page + 1); ?>"
+                                        aria-label="Next">
 
-
-    <!-- Modal -->
-    <!-- Modal Structure -->
-    <div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="detailModalLabel">Product Details</h5>
-                    <button type="button" class="close" onclick="closeModal()" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <form id="productForm">
-                        <div class="form-group">
-                            <label for="product_name_modal" class="col-form-label">Product Name:</label>
-                            <input type="text" name="product_name" class="form-control" id="product_name_modal" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label for="category_modal" class="col-form-label">Category:</label>
-                            <input type="text" name="category" class="form-control" id="category_modal" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label for="price_modal" class="col-form-label">Price:</label>
-                            <input type="text" name="price" class="form-control" id="price_modal" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label for="unit_modal" class="col-form-label">Unit:</label>
-                            <input type="text" name="unit" class="form-control" id="unit_modal" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label for="stock_modal" class="col-form-label">Stock:</label>
-                            <input type="text" name="stock" class="form-control" id="stock_modal" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label for="description_modal" class="col-form-label">Description:</label>
-                            <textarea class="form-control" name="description" id="description_modal" readonly></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-danger" id="deleteButton" onclick="deleteProduct()">Delete</button>
-                    <button type="button" class="btn btn-primary" id="editButton" onclick="toggleEditMode()">Edit</button>
+                                        <span aria-hidden="true">&raquo;</span>
+                                        <span class="sr-only">Next</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </table>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Modal -->
 
-    <!-- Back to Top -->
-    <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+
+        <!-- Modal -->
+        <!-- Modal Structure -->
+        <div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="detailModalLabel">Product Details</h5>
+                        <button type="button" class="close" onclick="closeModal()" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="productForm">
+                            <div class="form-group">
+                                <label for="product_name_modal" class="col-form-label">Product Name:</label>
+                                <input type="text" name="product_name" class="form-control" id="product_name_modal"
+                                    readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="category_modal" class="col-form-label">Category:</label>
+                                <input type="text" name="category" class="form-control" id="category_modal" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="price_modal" class="col-form-label">Price:</label>
+                                <input type="text" name="price" class="form-control" id="price_modal" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="unit_modal" class="col-form-label">Unit:</label>
+                                <input type="text" name="unit" class="form-control" id="unit_modal" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="stock_modal" class="col-form-label">Stock:</label>
+                                <input type="text" name="stock" class="form-control" id="stock_modal" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="description_modal" class="col-form-label">Description:</label>
+                                <textarea class="form-control" name="description" id="description_modal"
+                                    readonly></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" id="deleteButton"
+                            onclick="deleteProduct()">Delete</button>
+                        <button type="button" class="btn btn-primary" id="editButton"
+                            onclick="toggleEditMode()">Edit</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal -->
+
+        <!-- Back to Top -->
+        <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
     </div>
+    <script>
+    function viewComparisonGraph() {
+        // Navigasi ke halaman grafik perbandingan algoritma
+        window.location.href = "/sortComparison";
+    }
+    </script>
+
     <!-- searching function -->
     <script>
     function searchProducts() {
@@ -357,136 +386,217 @@
         });
     }
     </script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Event handler untuk submenu
+        const dropdownToggles = document.querySelectorAll('.dropdown-submenu > .dropdown-item');
 
+        dropdownToggles.forEach(function(toggle) {
+            toggle.addEventListener('click', function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+
+                const submenu = this.nextElementSibling;
+                if (submenu) {
+                    submenu.classList.toggle('show');
+                }
+            });
+        });
+        // Filter Harga
+        document.querySelectorAll('.dropdown-item[href*="filterByPrice"]').forEach(function(element) {
+            element.addEventListener('click', function(event) {
+                event.preventDefault();
+                const url = this.getAttribute('href');
+                window.location.href = url; // Redirect ke URL sesuai filter harga
+            });
+        });
+
+        // Filter Stok
+        document.querySelectorAll('.dropdown-item[href*="filterByStock"]').forEach(function(element) {
+            element.addEventListener('click', function(event) {
+                event.preventDefault();
+                const url = this.getAttribute('href');
+                window.location.href = url; // Redirect ke URL sesuai filter stok
+            });
+        });
+
+        // Reset Filter
+        document.querySelector('.dropdown-item[onclick="resetFilters(event)"]').addEventListener('click',
+            function(event) {
+                event.preventDefault();
+                window.location.href =
+                    '<?= site_url("/products/resetFilters"); ?>'; // Redirect ke route reset filters
+            });
+    });
+    </script>
+    <script>
+    const showAlert = (titleAlert, messageAlert, alertType, confirmBtn = true) => {
+        return Swal.fire({
+            title: `${titleAlert}`,
+            icon: `${alertType}`,
+            text: `${messageAlert}`,
+            showConfirmButton: confirmBtn
+        });
+        $('.dropdown-item').on('click', function(event) {
+            event.preventDefault();
+            var href = $(this).attr('href');
+            window.location.href = href;
+        });
+
+    }
+    </script>
+    <script>
+    function openModal(button) {
+        const productId = button.getAttribute('data-id'); // Ambil ID produk dari atribut data
+        modal(productId); // Panggil fungsi modal dengan ID produk
+    }
+    </script>
     <!-- modal -->
     <script>
-        let isEditMode = false; // Untuk melacak mode edit
-        let currentProductId = null; // ID produk aktif
+    let isEditMode = false; // Untuk melacak mode edit
+    let currentProductId = null; // ID produk aktif
 
-        // Fungsi untuk membuka modal dengan data produk
-        async function modal(productId) {
-            try {
-                currentProductId = productId; // Simpan ID produk aktif
-                const data = await fetchData(productId);
+    // Fungsi untuk membuka modal dengan data produk
+    async function modal(productId) {
+        try {
+            currentProductId = productId; // Simpan ID produk aktif
+            const data = await fetchData(productId);
 
-                if (!data || !data.product_id) {
-                    alert('Data produk tidak ditemukan');
-                    return;
-                }
-
-                // Isi form modal dengan data
-                $('#product_name_modal').val(data.product_name);
-                $('#category_modal').val(data.category);
-                $('#price_modal').val(data.price);
-                $('#unit_modal').val(data.unit);
-                $('#stock_modal').val(data.stock);
-                $('#description_modal').val(data.description);
-
-                // Menampilkan modal
-                $('#detailModal').modal('show');
-            } catch (error) {
-                alert('Terjadi kesalahan saat mengambil data produk: ' + error.message);
+            if (!data || !data.product_id) {
+                showAlert('No Data', 'Data produk tidak di temukan', 'info');
+                return;
             }
+
+            // Isi form modal dengan data
+            $('#product_name_modal').val(data.product_name);
+            $('#category_modal').val(data.category);
+            $('#price_modal').val(data.price);
+            $('#unit_modal').val(data.unit);
+            $('#stock_modal').val(data.stock);
+            $('#description_modal').val(data.description);
+
+            // Menampilkan modal
+            $('#detailModal').modal('show');
+        } catch (error) {
+            showAlert('Error',
+                `Terjadi kesalahan saat memuat mengambil data produk ${error.message}`, 'error')
         }
+    }
 
-        // Fungsi untuk mengambil data produk
-        async function fetchData(productId) {
-            const response = await fetch(`/TokoSembako/public/get-data-modals/${productId}`);
-            if (!response.ok) {
-                throw new Error('Gagal mengambil data');
-            }
-            return await response.json();
+    // Fungsi untuk mengambil data produk
+    async function fetchData(productId) {
+        console.log('Fetching data for product ID:', productId); // Debug ID produk
+        const response = await fetch(`/products/getDataById/${productId}`);
+        if (!response.ok) {
+            console.error('Failed to fetch product data:', response.status);
+            throw new Error('Gagal mengambil data produk');
         }
+        const data = await response.json();
+        console.log('Data fetched:', data); // Debug data yang diterima
+        return data;
+    }
 
-        // Fungsi untuk menutup modal
-        function closeModal() {
-            $('#detailModal').modal('hide');
-            isEditMode = false; // Reset mode edit
-            toggleEditMode(false); // Kembali ke readonly
+    // Fungsi untuk menutup modal
+    function closeModal() {
+        $('#detailModal').modal('hide');
+        isEditMode = false; // Reset mode edit
+        toggleEditMode(false); // Kembali ke readonly
+    }
+
+    // Fungsi untuk mengaktifkan atau menonaktifkan mode edit
+    function toggleEditMode(enableEdit = true) {
+        isEditMode = enableEdit;
+
+        // Ganti readonly pada input
+        $('#product_name_modal').prop('readonly', !isEditMode);
+        $('#category_modal').prop('readonly', !isEditMode);
+        $('#price_modal').prop('readonly', !isEditMode);
+        $('#unit_modal').prop('readonly', !isEditMode);
+        $('#stock_modal').prop('readonly', !isEditMode);
+        $('#description_modal').prop('readonly', !isEditMode);
+
+        // Ganti tombol Edit menjadi Save
+        const editButton = $('#editButton');
+        if (isEditMode) {
+            editButton.text('Save');
+            editButton.attr('onclick', 'saveChanges()');
+        } else {
+            editButton.text('Edit');
+            editButton.attr('onclick', 'toggleEditMode()');
         }
+    }
 
-        // Fungsi untuk mengaktifkan atau menonaktifkan mode edit
-        function toggleEditMode(enableEdit = true) {
-            isEditMode = enableEdit;
+    // Fungsi untuk menyimpan perubahan
+    async function saveChanges() {
+        try {
+            const data = {
+                product_name: $('#product_name_modal').val(),
+                category: $('#category_modal').val(),
+                stock: parseInt($('#stock_modal').val(), 10),
+                unit: $('#unit_modal').val(),
+                price: parseInt($('#price_modal').val(), 10),
+                description: $('#description_modal').val(),
+            };
 
-            // Ganti readonly pada input
-            $('#product_name_modal').prop('readonly', !isEditMode);
-            $('#category_modal').prop('readonly', !isEditMode);
-            $('#price_modal').prop('readonly', !isEditMode);
-            $('#unit_modal').prop('readonly', !isEditMode);
-            $('#stock_modal').prop('readonly', !isEditMode);
-            $('#description_modal').prop('readonly', !isEditMode);
+            const response = await fetch(`/products/update/${currentProductId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
 
-            // Ganti tombol Edit menjadi Save
-            const editButton = $('#editButton');
-            if (isEditMode) {
-                editButton.text('Save');
-                editButton.attr('onclick', 'saveChanges()');
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                showAlert('Berhasil', `${result.message}`, 'success', false);
+                $('#detailModal').modal('hide'); // Tutup modal
+                location.reload(); // Refresh halaman
             } else {
-                editButton.text('Edit');
-                editButton.attr('onclick', 'toggleEditMode()');
+                showAlert('Error', `${result.errors || result.message}`, 'error')
             }
+        } catch (error) {
+            console.error(error);
+            showAlert('Error', `Terjadi kesalahan :${error.message}`, 'error')
         }
+    }
 
-        // Fungsi untuk menyimpan perubahan
-        async function saveChanges() {
-            try {
-                const data = {
-                    product_name: $('#product_name_modal').val(),
-                    category: $('#category_modal').val(),
-                    stock: parseInt($('#stock_modal').val(), 10),
-                    unit: $('#unit_modal').val(),
-                    price: parseInt($('#price_modal').val(), 10),
-                    description: $('#description_modal').val(),
-                };
 
-                const response = await fetch(`/TokoSembako/public/products/update/${currentProductId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data),
-                });
 
-                const result = await response.json();
+    // Fungsi untuk menghapus produk
+    async function deleteProduct() {
+        const baseUrl = "<?= base_url() ?>";
+        try {
+            const confirmDelete = confirm('Apakah Anda yakin ingin menghapus produk ini?');
+            if (!confirmDelete) return;
 
-                if (result.status === 'success') {
-                    alert(result.message);
-                    $('#detailModal').modal('hide'); // Tutup modal
-                    location.reload(); // Refresh halaman
-                } else {
-                    alert('Error: ' + (result.errors || result.message));
-                }
-            } catch (error) {
-                console.error(error);
-                alert('Terjadi kesalahan: ' + error.message);
+            const response = await fetch(`/products/delete/${currentProductId}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                throw new Error('Gagal menghapus produk');
             }
+            showAlert('Berhasil', 'Produk berhasil dihapus.', 'success', false);
+            window.location.href = baseUrl + "/products";
+            closeModal();
+
+        } catch (error) {
+            showAlert('Error', `Terjadi kesalahan :${error.message}`, 'error');
         }
-
-
-
-        // Fungsi untuk menghapus produk
-        async function deleteProduct() {
-            try {
-                const confirmDelete = confirm('Apakah Anda yakin ingin menghapus produk ini?');
-                if (!confirmDelete) return;
-
-                const response = await fetch(`/TokoSembako/public/products/delete/${currentProductId}`, {
-                    method: 'DELETE',
-                });
-
-                if (!response.ok) {
-                    throw new Error('Gagal menghapus produk');
-                }
-
-                alert('Produk berhasil dihapus');
-                closeModal();
-            } catch (error) {
-                alert('Terjadi kesalahan: ' + error.message);
-            }
-        }
-
+    }
     </script>
+    <!-- Flash Message Success or Error -->
+    <?php if (session()->getFlashdata('success')): ?>
+    <script>
+    showAlert('Selamat Datang', 'Anda Berhasil Login!', 'success');
+    </script>
+    <?php endif; ?>
+    <?php if (session()->getFlashdata('error')): ?>
+    <script>
+    showAlert('Gagal', 'Terjadi kesalahan dalam memuat data!', 'error');
+    </script>
+    <?php endif; ?>
     <script src="https://code.jquery.com/jquery-3.4.1.min.js">
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -507,4 +617,3 @@
 </body>
 
 </html>
-

@@ -8,61 +8,31 @@ class ProductsController extends BaseController
 {
     public function index()
     {
-        $model = new ProductsModel();
-        $curr_final = 0 * 10;
-
-        // Mengambil data produk dengan limit dan tanpa limit
-        $data = $model->getAllProducts($curr_final);
-        $data2 = $model->getAllProductsNotLimit();
-
-        // Mengirim data ke view 'dashboard'
-        return view('products', [
-            'products' => $data,
-            'pages' => $data2,
-            'current' => 1
-        ]);
-    }
-
-
-    // AJAX ctrl
-    public function getDataById($id)
-    {
-        $model = new ProductsModel();
-        $data_result = $model->find($id); // Pastikan find() mengembalikan data yang benar
-
-        // Cek apakah data ditemukan
-        if (!$data_result) {
-            return $this->response->setJSON(['error' => 'Product not found']);
+        if (!session()->get('username')) {
+            return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu.');
         }
 
-        // Pastikan data lengkap dikirimkan
-        return $this->response->setJSON($data_result);
-    }
-
-    // Untuk menghapus produk
-    public function deleteProduct($id)
-    {
         $model = new ProductsModel();
-        $model->delete($id);
-        return $this->response->setJSON(['status' => 'deleted']);
+        $data['products'] = $model->getAllProductsNotLimit();
+        $data['pages'] = $model->getAllProductsNotLimit();
+        $data['current'] = 1;
+
+        return view('products', $data);
     }
-
-    // ajax ctrl
-    
-
 
     public function pagination($curr)
     {
-        // Membuat instance model
-        $model = new ProductsModel();
-        
-        $curr_final = $curr * 10;
-        // Mengambil semua data produk dari tabel 'products'
-        $data = $model->getAllProducts($curr_final);
-        $data2 = $model->getAllProductsNotLimit();
+        if (!session()->get('username')) {
+            return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu.');
+        }
 
-        // Mengirim data ke view 'dashboard'
-        return view('products', [ 'products' => $data , 'pages' => $data2, 'current' => $curr ]);
+        $model = new ProductsModel();
+        $curr_final = ($curr == 0) ? 10 : $curr * 10;
+        $data['products'] = $model->getAllProductsNotLimit();
+        $data['pages'] = $model->getAllProductsNotLimit();
+        $data['current'] = $curr;
+
+        return view('products', $data);
     }
 
     public function add()
@@ -73,8 +43,6 @@ class ProductsController extends BaseController
     public function save()
     {
         $productsModel = new ProductsModel();
-
-        // Validasi data
         $data = [
             'product_name' => $this->request->getPost('product_name'),
             'category' => $this->request->getPost('category'),
@@ -84,27 +52,29 @@ class ProductsController extends BaseController
             'description' => $this->request->getPost('description'),
         ];
 
-        // Simpan data ke database
         if ($productsModel->insert($data)) {
-            return redirect()->to('/')->with('success', 'Data produk berhasil disimpan.');
+            return redirect()->to('/products')->with('success', 'Data produk berhasil disimpan.');
         } else {
             return redirect()->back()->with('error', 'Gagal menyimpan data produk.');
         }
     }
+
     public function search_ajax()
     {
-        // Ambil query dari request Ajax
         $query = $this->request->getVar('query');
-
-        // Memanggil model untuk mencari data berdasarkan query
         $model = new ProductsModel();
-        $products = $model->searchProducts($query);
 
-        // Menampilkan data dalam format tabel
+        if (empty($query)) {
+            $products = $model->getAllProductsNotLimit();
+        } else {
+            $products = $model->searchProducts($query);
+            $products = $model->mergeSort($products, 'stock');
+        }
+
         $no = 0;
         $output = '';
-        if ($products) {
 
+        if ($products) {
             foreach ($products as $product) {
                 $no++;
                 $output .= '<tr>';
@@ -115,7 +85,7 @@ class ProductsController extends BaseController
                 $output .= '<td>' . $product['unit'] . '</td>';
                 $output .= '<td>' . 'Rp' . number_format($product['price'], 0, ',', '.') . '</td>';
                 $output .= '<td>' . $product['description'] . '</td>';
-                $output .= '<td><button class="btn btn-sm btn-primary btn-detail" id="'.$product['product_id'].'" onclick="modal(this.id)">Detail</button></td>';
+                $output .= '<td><button class="btn btn-sm btn-primary btn-detail" id="detail-' . $product['product_id'] . '" onclick="modal(' . $product['product_id'] . ')">Detail</button></td>';
                 $output .= '</tr>';
             }
         } else {
@@ -125,13 +95,60 @@ class ProductsController extends BaseController
         echo $output;
     }
 
-    
+    public function filterByPrice($type, $algorithm = 'merge')
+    {
+        $model = new ProductsModel();
+        $data['products'] = $model->filterByPrice($type, $algorithm);
+        $data['pages'] = $model->getAllProductsNotLimit();
+        $data['current'] = 1;
+
+        return view('products', $data);
+    }
+
+    public function filterByStock($type, $algorithm = 'merge')
+    {
+        $model = new ProductsModel();
+        $data['products'] = $model->filterByStock($type, $algorithm);
+        $data['pages'] = $model->getAllProductsNotLimit();
+        $data['current'] = 1;
+
+        return view('products', $data);
+    }
+
+    public function resetFilters()
+    {
+        $model = new ProductsModel();
+        $data['products'] = $model->getAllProductsNotLimit();
+        $data['pages'] = $model->getAllProductsNotLimit();
+        $data['current'] = 1;
+
+        return view('products', $data);
+    }
+
+    public function getDataById($id)
+    {
+        $model = new ProductsModel();
+        $data_result = $model->find($id);
+
+        if (!$data_result) {
+            return $this->response->setJSON(['error' => 'Product not found']);
+        }
+
+        return $this->response->setJSON($data_result);
+    }
+
+    public function deleteProduct($id)
+    {
+        $model = new ProductsModel();
+        $model->delete($id);
+
+        return $this->response->setJSON(['status' => 'deleted']);
+    }
+
     public function update($id)
     {
-        // Ambil data dari request (JSON)
-        $data = $this->request->getJSON(true); // Konversi ke array asosiatif
-    
-        // Validasi input
+        $data = $this->request->getJSON(true);
+
         $validation = $this->validate([
             'product_name' => 'required',
             'category' => 'required',
@@ -140,15 +157,15 @@ class ProductsController extends BaseController
             'stock' => 'required|integer',
             'description' => 'required',
         ]);
-    
+
         if (!$validation) {
             return $this->response->setJSON([
                 'status' => 'error',
                 'errors' => $this->validator->getErrors(),
+
             ]);
         }
-    
-        // Update data di database
+
         $model = new ProductsModel();
         if ($model->update($id, $data)) {
             return $this->response->setJSON(['status' => 'success', 'message' => 'Produk berhasil diperbarui']);
@@ -156,5 +173,12 @@ class ProductsController extends BaseController
             return $this->response->setJSON(['status' => 'error', 'message' => 'Gagal memperbarui produk']);
         }
     }
-    
+    public function sortComparison()
+    {
+        $model = new ProductsModel();
+        $result = $model->benchmarkSortAlgorithms('price');
+
+        return view('sort_comparison', ['result' => $result]);
+    }
+
 }
