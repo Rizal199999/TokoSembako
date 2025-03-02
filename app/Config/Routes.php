@@ -35,10 +35,9 @@ $routes->get('/dashboard', 'Auth::dashboard');
     $routes->get('/products/(:num)', 'ProductsController::pagination/$1'); // Pagination produk
     $routes->get('/products/search_ajax', 'ProductsController::searchAjax');
     $routes->get('/products/getDataById/(:num)', 'ProductsController::getDataById/$1');
-    $routes->get('/products/filterByPrice/(:any)', 'ProductsController::filterByPrice/$1');
+    $routes->get('/products/filterByPrice/(:any)/(:any)', 'ProductsController::filterByPrice/$1/$2');
     $routes->get('/products/filterByStock/(:any)', 'ProductsController::filterByStock/$1');
-    $routes->get('/products/resetFilters', 'ProductsController::resetFilters');
-    $routes->get('/sortComparison', 'ProductsController::sortComparison');
+    $routes->get('/sort-comparison/(:any)', 'ProductsController::sortComparison/$1');
 
 // Rute untuk karyawan
     $routes->get('/selling_price', 'PriceManagementController::sellingPrices'); // selling_price.php

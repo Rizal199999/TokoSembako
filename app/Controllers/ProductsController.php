@@ -95,7 +95,7 @@ class ProductsController extends BaseController
         echo $output;
     }
 
-    public function filterByPrice($type, $algorithm = 'merge')
+    public function filterByPrice($type, $algorithm)
     {
         $model = new ProductsModel();
         $data['products'] = $model->filterByPrice($type, $algorithm);
@@ -109,16 +109,6 @@ class ProductsController extends BaseController
     {
         $model = new ProductsModel();
         $data['products'] = $model->filterByStock($type, $algorithm);
-        $data['pages'] = $model->getAllProductsNotLimit();
-        $data['current'] = 1;
-
-        return view('products', $data);
-    }
-
-    public function resetFilters()
-    {
-        $model = new ProductsModel();
-        $data['products'] = $model->getAllProductsNotLimit();
         $data['pages'] = $model->getAllProductsNotLimit();
         $data['current'] = 1;
 
@@ -173,12 +163,12 @@ class ProductsController extends BaseController
             return $this->response->setJSON(['status' => 'error', 'message' => 'Gagal memperbarui produk']);
         }
     }
-    public function sortComparison()
+    public function sortComparison($type)
     {
         $model = new ProductsModel();
-        $result = $model->benchmarkSortAlgorithms('price');
-
-        return view('sort_comparison', ['result' => $result]);
-    }
+        $result = $model->benchmarkSortAlgorithms($type);
+    
+        return $this->response->setJSON($result);
+    }    
 
 }

@@ -91,7 +91,7 @@ class ProductsModel extends Model
         return array_merge($this->quickSort($left, $type), [$pivot], $this->quickSort($right, $type));
     }
 
-    public function filterByPrice($type, $algorithm = 'merge')
+    public function filterByPrice($type, $algorithm)
     {
         $products = $this->getAllProductsNotLimit();
 
@@ -130,7 +130,7 @@ class ProductsModel extends Model
         return $this->update($productId, ['selling_price' => $sellingPrice]);
     }
 
-    public function benchmarkSortAlgorithms($type = 'price')
+    public function benchmarkSortAlgorithms($type)
     {
         $products = $this->getAllProductsNotLimit();
 
@@ -150,11 +150,24 @@ class ProductsModel extends Model
         $quickSortTime = microtime(true) - $startTime;
         $quickSortMemory = memory_get_peak_usage(true) / 1024; // KB
 
+        // Menentukan algoritma terbaik berdasarkan kombinasi waktu & memori
+        if ($mergeSortTime < $quickSortTime && $mergeSortMemory < $quickSortMemory) {
+            $recommended = 'merge';
+        } elseif ($quickSortTime < $mergeSortTime && $quickSortMemory < $mergeSortMemory) {
+            $recommended = 'quick';
+        } elseif ($mergeSortTime < $quickSortTime) {
+            $recommended = 'merge';
+        } else {
+            $recommended = 'quick';
+        }
+
         return [
             'mergeSortTime' => $mergeSortTime,
             'quickSortTime' => $quickSortTime,
             'mergeSortMemory' => $mergeSortMemory,
             'quickSortMemory' => $quickSortMemory,
+            'recordCount' => count($products),
+            'recommendation' => $recommended
         ];
     }
 
