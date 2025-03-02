@@ -413,8 +413,8 @@
                         document.getElementById("mergeMemory").textContent = data.mergeSortMemory.toFixed(2) + " KB";
                         document.getElementById("quickMemory").textContent = data.quickSortMemory.toFixed(2) + " KB";
                         document.getElementById("record").textContent = data.recordCount + " Data";
-                        document.getElementById("btn-merge").href = "<?= site_url('/products/filterByPrice/low/merge?alert=low') ?>";
-                        document.getElementById("btn-quick").href = "<?= site_url('/products/filterByPrice/low/quick?alert=low') ?>";
+                        document.getElementById("btn-merge").href = "<?= site_url('/products/filterByPrice/low/merge') ?>";
+                        document.getElementById("btn-quick").href = "<?= site_url('/products/filterByPrice/low/quick') ?>";
                         if (data.recommendation === 'merge') {
                             document.getElementById("recomend").textContent = "Merge Sort";
                             document.getElementById("btn-merge").classList.add("btn-primary");
@@ -440,8 +440,8 @@
                         document.getElementById("mergeMemory").textContent = data.mergeSortMemory.toFixed(2) + " KB";
                         document.getElementById("quickMemory").textContent = data.quickSortMemory.toFixed(2) + " KB";
                         document.getElementById("record").textContent = data.recordCount + " Data";
-                        document.getElementById("btn-merge").href = "<?= site_url('/products/filterByPrice/high/merge?alert=high') ?>";
-                        document.getElementById("btn-quick").href = "<?= site_url('/products/filterByPrice/high/quick?alert=high') ?>";
+                        document.getElementById("btn-merge").href = "<?= site_url('/products/filterByPrice/high/merge') ?>";
+                        document.getElementById("btn-quick").href = "<?= site_url('/products/filterByPrice/high/quick') ?>";
                         if (data.recommendation === 'merge') {
                             document.getElementById("recomend").textContent = "Merge Sort";
                             document.getElementById("btn-merge").classList.add("btn-primary");
