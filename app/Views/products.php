@@ -112,12 +112,10 @@
                                     <li class="dropdown-submenu">
                                         <a class="dropdown-item dropdown-toggle" href="#">Filter Harga</a>
                                         <ul class="dropdown-menu nested-menu">
-                                            <li><a class="dropdown-item"
-                                                    href="<?= site_url('/products/filterByPrice/low'); ?>">Paling
-                                                    Rendah</a>
+                                            <li>
+                                                <a id="fetchDataLowPrice" class="dropdown-item btn">Paling Rendah</a>
                                             </li>
-                                            <li><a class="dropdown-item"
-                                                    href="<?= site_url('/products/filterByPrice/high'); ?>">Paling
+                                            <li><a id="fetchDataHighPrice" class="dropdown-item btn">Paling
                                                     Tinggi</a></li>
                                         </ul>
                                     </li>
@@ -125,11 +123,9 @@
                                     <li class="dropdown-submenu">
                                         <a class="dropdown-item dropdown-toggle" href="#">Filter Stok</a>
                                         <ul class="dropdown-menu nested-menu">
-                                            <li><a class="dropdown-item"
-                                                    href="<?= site_url('/products/filterByStock/low'); ?>">Paling
+                                            <li><a class="dropdown-item btn" id="fetchDataLowStock">Paling
                                                     Sedikit</a></li>
-                                            <li><a class="dropdown-item"
-                                                    href="<?= site_url('/products/filterByStock/high'); ?>">Paling
+                                            <li><a class="dropdown-item btn" id="fetchDataHighStock">Paling
                                                     Banyak</a></li>
                                         </ul>
                                     </li>
@@ -138,7 +134,7 @@
                                         <hr class="dropdown-divider">
                                     </li>
                                     <li>
-                                        <a class="dropdown-item" href="<?= site_url('/products/resetFilters'); ?>">Reset
+                                        <a class="dropdown-item" href="<?= site_url('/products'); ?>">Reset
                                             Filter</a>
                                     </li>
                                 </ul>
@@ -210,7 +206,24 @@
                         </div>
                     </div>
                 </div>
-
+                <?php foreach ($products as $product){?>
+                    <?php if (isset($_GET['alert']) && $_GET['alert'] == 'high' && $product['stock'] > 500) { ?>
+                        <div class="alert alert-warning" role="alert">
+                        <i class="fas fa-exclamation-triangle"></i> Terdapat barang dengan stok melebihi standar!
+                        </div>
+                    <?php
+                    break; 
+                    }
+                    ?>
+                    <?php if (isset($_GET['alert']) && $_GET['alert'] == 'low' && $product['stock'] < 20) { ?>
+                        <div class="alert alert-warning" role="alert">
+                        <i class="fas fa-exclamation-triangle"></i> Terdapat barang dengan stok terlalu sedikit silahkan lakukan restok ulang!
+                        </div>
+                    <?php
+                    break; 
+                    }
+                    ?>
+                <?php } ?>
                 <!-- Tabel Produk -->
                 <div class="table-responsive d-flex flex-column-reverse justify-content-lg-center align-items-center">
                     <table class="table text-start align-middle table-bordered table-hover mb-0 p -3">
@@ -233,8 +246,15 @@
                             if (!empty($products) && is_array($products)): 
                             ?>
                             <?php foreach ($products as $product): ?>
-                            <tr>
-                                <td><?= $no; ?></td>
+                            <tr class="<?= ($no == 1 && $product['stock'] > 500 && isset($_GET['alert']) && $_GET['alert'] == 'high' || $no == 1 && $product['stock'] < 20 && isset($_GET['alert']) && $_GET['alert'] == 'low' ) ? 'text-danger' : (( $product['stock'] > 500 && isset($_GET['alert']) && $_GET['alert'] == 'high' || $product['stock'] < 20 && isset($_GET['alert']) && $_GET['alert'] == 'low' ) ? 'text-warning' : 'text-dark'); ?>">
+                                <td>
+                                    <span class="d-inline">
+                                        <?= $no; ?>
+                                        <?php if (isset($_GET['alert']) && $_GET['alert'] == 'low' && $product['stock'] < 20 || isset($_GET['alert']) && $_GET['alert'] == 'high' && $product['stock'] > 500) { ?>
+                                            <span class="d-inline text-danger"><i class="fas fa-exclamation-circle"></i></span>
+                                        <?php } ?>
+                                    </span>
+                                </td>
                                 <td><?= $product['product_name']; ?></td>
                                 <td><?= $product['category']; ?></td>
                                 <td><?= $product['stock']; ?></td>
@@ -357,6 +377,196 @@
         </div>
 
         <!-- Modal -->
+        <div class="modal fade" id="sortModal" tabindex="-1" aria-labelledby="sortModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="sortModalLabel">Hasil Kalkulasi Perbandingan Algoritma Sorting</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <h1 style="text-align: center;">Merge Sort vs Quick Sort</h1>
+                        <p><strong>Waktu Merge Sort:</strong> <span id="mergeTime">Loading...</span></p>
+                        <p><strong>Waktu Quick Sort:</strong> <span id="quickTime">Loading...</span></p>
+                        <p><strong>Memori Merge Sort:</strong> <span id="mergeMemory">Loading...</span></p>
+                        <p><strong>Memori Quick Sort:</strong> <span id="quickMemory">Loading...</span></p>
+                        <canvas id="comparisonChart" width="400" height="200"></canvas>
+                        <b><i><span id="record"></span> records...</i></b>
+                    </div>
+                    <p class="text-center">Algoritma rekomendasi "<strong><i><span id="recomend"></span></i></strong>", Silahkan pilih :</p>
+                    <div class="modal-footer justify-content-center">
+                        <a id="btn-merge" href="" class="btn" >Merge Sort</a>
+                        <a id="btn-quick" href="" class="btn" >Quick Sort</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            document.getElementById("fetchDataLowPrice").addEventListener("click", function() {
+                fetch('/sort-comparison/price') // Sesuaikan dengan URL API
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById("mergeTime").textContent = data.mergeSortTime.toFixed(6) + " detik";
+                        document.getElementById("quickTime").textContent = data.quickSortTime.toFixed(6) + " detik";
+                        document.getElementById("mergeMemory").textContent = data.mergeSortMemory.toFixed(2) + " KB";
+                        document.getElementById("quickMemory").textContent = data.quickSortMemory.toFixed(2) + " KB";
+                        document.getElementById("record").textContent = data.recordCount + " Data";
+                        document.getElementById("btn-merge").href = "<?= site_url('/products/filterByPrice/low/merge?alert=low') ?>";
+                        document.getElementById("btn-quick").href = "<?= site_url('/products/filterByPrice/low/quick?alert=low') ?>";
+                        if (data.recommendation === 'merge') {
+                            document.getElementById("recomend").textContent = "Merge Sort";
+                            document.getElementById("btn-merge").classList.add("btn-primary");
+                            document.getElementById("btn-quick").classList.add("btn-secondary");
+                        } else if(data.recommendation === 'quick') {
+                            document.getElementById("recomend").textContent = "Quick Sort";
+                            document.getElementById("btn-quick").classList.add("btn-primary");
+                            document.getElementById("btn-merge").classList.add("btn-secondary");
+                        }
+                        updateChart(data);
+                        let modal = new bootstrap.Modal(document.getElementById("sortModal"));
+                        modal.show();
+                    })
+                    .catch(error => console.error("Error:", error));
+            });
+
+            document.getElementById("fetchDataHighPrice").addEventListener("click", function() {
+                fetch('/sort-comparison/price') // Sesuaikan dengan URL API
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById("mergeTime").textContent = data.mergeSortTime.toFixed(6) + " detik";
+                        document.getElementById("quickTime").textContent = data.quickSortTime.toFixed(6) + " detik";
+                        document.getElementById("mergeMemory").textContent = data.mergeSortMemory.toFixed(2) + " KB";
+                        document.getElementById("quickMemory").textContent = data.quickSortMemory.toFixed(2) + " KB";
+                        document.getElementById("record").textContent = data.recordCount + " Data";
+                        document.getElementById("btn-merge").href = "<?= site_url('/products/filterByPrice/high/merge?alert=high') ?>";
+                        document.getElementById("btn-quick").href = "<?= site_url('/products/filterByPrice/high/quick?alert=high') ?>";
+                        if (data.recommendation === 'merge') {
+                            document.getElementById("recomend").textContent = "Merge Sort";
+                            document.getElementById("btn-merge").classList.add("btn-primary");
+                            document.getElementById("btn-quick").classList.add("btn-secondary");
+                        } else if(data.recommendation === 'quick') {
+                            document.getElementById("recomend").textContent = "Quick Sort";
+                            document.getElementById("btn-quick").classList.add("btn-primary");
+                            document.getElementById("btn-merge").classList.add("btn-secondary");
+                        }
+                        updateChart(data);
+                        let modal = new bootstrap.Modal(document.getElementById("sortModal"));
+                        modal.show();
+                    })
+                    .catch(error => console.error("Error:", error));
+            });
+
+            document.getElementById("fetchDataHighStock").addEventListener("click", function() {
+                fetch('/sort-comparison/stock') // Sesuaikan dengan URL API
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById("mergeTime").textContent = data.mergeSortTime.toFixed(6) + " detik";
+                        document.getElementById("quickTime").textContent = data.quickSortTime.toFixed(6) + " detik";
+                        document.getElementById("mergeMemory").textContent = data.mergeSortMemory.toFixed(2) + " KB";
+                        document.getElementById("quickMemory").textContent = data.quickSortMemory.toFixed(2) + " KB";
+                        document.getElementById("record").textContent = data.recordCount + " Data";
+                        document.getElementById("btn-merge").href = "<?= site_url('/products/filterByStock/high/merge?alert=high') ?>";
+                        document.getElementById("btn-quick").href = "<?= site_url('/products/filterByStock/high/quick?alert=high') ?>";
+                        if (data.recommendation === 'merge') {
+                            document.getElementById("recomend").textContent = "Merge Sort";
+                            document.getElementById("btn-merge").classList.add("btn-primary");
+                            document.getElementById("btn-quick").classList.add("btn-secondary");
+                        } else if(data.recommendation === 'quick') {
+                            document.getElementById("recomend").textContent = "Quick Sort";
+                            document.getElementById("btn-quick").classList.add("btn-primary");
+                            document.getElementById("btn-merge").classList.add("btn-secondary");
+                        }
+                        updateChart(data);
+                        let modal = new bootstrap.Modal(document.getElementById("sortModal"));
+                        modal.show();
+                    })
+                    .catch(error => console.error("Error:", error));
+            });
+
+            document.getElementById("fetchDataLowStock").addEventListener("click", function() {
+                fetch('/sort-comparison/stock') // Sesuaikan dengan URL API
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById("mergeTime").textContent = data.mergeSortTime.toFixed(6) + " detik";
+                        document.getElementById("quickTime").textContent = data.quickSortTime.toFixed(6) + " detik";
+                        document.getElementById("mergeMemory").textContent = data.mergeSortMemory.toFixed(2) + " KB";
+                        document.getElementById("quickMemory").textContent = data.quickSortMemory.toFixed(2) + " KB";
+                        document.getElementById("record").textContent = data.recordCount + " Data";
+                        document.getElementById("btn-merge").href = "<?= site_url('/products/filterByStock/low/merge?alert=low') ?>";
+                        document.getElementById("btn-quick").href = "<?= site_url('/products/filterByStock/low/quick?alert=low') ?>";
+                        if (data.recommendation === 'merge') {
+                            document.getElementById("recomend").textContent = "Merge Sort";
+                            document.getElementById("btn-merge").classList.add("btn-primary");
+                            document.getElementById("btn-quick").classList.add("btn-secondary");
+                        } else if(data.recommendation === 'quick') {
+                            document.getElementById("recomend").textContent = "Quick Sort";
+                            document.getElementById("btn-quick").classList.add("btn-primary");
+                            document.getElementById("btn-merge").classList.add("btn-secondary");
+                        }
+                        updateChart(data);
+                        let modal = new bootstrap.Modal(document.getElementById("sortModal"));
+                        modal.show();
+                    })
+                    .catch(error => console.error("Error:", error));
+            });
+        });
+
+        function updateChart(data) {
+            const ctx = document.getElementById("comparisonChart").getContext("2d");
+
+            if (window.myChart) window.myChart.destroy(); // Hapus chart lama jika ada
+
+            window.myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Merge Sort', 'Quick Sort'],
+                    datasets: [{
+                        label: 'Waktu Eksekusi (detik)',
+                        data: [data.mergeSortTime, data.quickSortTime],
+                        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1,
+                        yAxisID: 'y' // Pakai sumbu kiri
+                    }, {
+                        label: 'Penggunaan Memori (KB)',
+                        data: [data.mergeSortMemory, data.quickSortMemory],
+                        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1,
+                        yAxisID: 'y1' // Pakai sumbu kanan
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Waktu (detik)'
+                            },
+                            position: 'left'
+                        },
+                        y1: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Memori (KB)'
+                            },
+                            position: 'right',
+                            grid: {
+                                drawOnChartArea: false // Agar grid tidak bertumpuk
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+    </script>
+        <!-- Modal -->
 
         <!-- Back to Top -->
         <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
@@ -420,13 +630,6 @@
             });
         });
 
-        // Reset Filter
-        document.querySelector('.dropdown-item[onclick="resetFilters(event)"]').addEventListener('click',
-            function(event) {
-                event.preventDefault();
-                window.location.href =
-                    '<?= site_url("/products/resetFilters"); ?>'; // Redirect ke route reset filters
-            });
     });
     </script>
     <script>
