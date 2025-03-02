@@ -38,6 +38,7 @@ $routes->get('/dashboard', 'Auth::dashboard');
     $routes->get('/products/filterByPrice/(:any)/(:any)', 'ProductsController::filterByPrice/$1/$2');
     $routes->get('/products/filterByStock/(:any)', 'ProductsController::filterByStock/$1');
     $routes->get('/sort-comparison/(:any)', 'ProductsController::sortComparison/$1');
+    $routes->get('/sortComparison', 'ProductsController::trySortComparison');
 
 // Rute untuk karyawan
     $routes->get('/selling_price', 'PriceManagementController::sellingPrices'); // selling_price.php
