@@ -171,4 +171,11 @@ class ProductsController extends BaseController
         return $this->response->setJSON($result);
     }    
 
+    public function trySortComparison()
+    {
+        $model = new ProductsModel();
+        $result = $model->benchmarkSortAlgorithms('price');
+
+        return view('sort_comparison', ['result' => $result]);
+    }
 }
